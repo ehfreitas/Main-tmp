@@ -8,7 +8,7 @@ The objetive of this project is to develop a disaster classification web app whi
 
 ## Project Components
 
-The project can be broken down in three compoents as follows:
+The project can be broken down in three components as follows:
 1. ETL Pipeline
 
 A Extract Transform Load (ETL) Pipeline which loads the messages and categories datasets, merge them together, cleans the data and stores it in a SQLite database.
