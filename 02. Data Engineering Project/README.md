@@ -26,6 +26,7 @@ A flask web app which shows the three visualizations explained in the project ob
 
     a. To run ETL pipeline that cleans data and stores in database
         `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterMsgDb.db`
+        
     b. To run ML pipeline that trains classifier and saves
         `python models/train_classifier.py data/DisasterMsgDb.db models/rfc.pkl`
 
