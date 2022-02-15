@@ -1,6 +1,7 @@
 # Project 2 - Disaster Response Pipeline Project
 
 [![N|Solid](https://www.python.org/static/community_logos/python-powered-w-70x28.png)](https://www.python.org/)
+[![N|Solid](https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png)](https://scikit-learn.org/stable/)
 
 ## Project Objective
 
