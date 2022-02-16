@@ -1,6 +1,7 @@
 # Project 2 - Disaster Response Pipeline Project
 
 [![N|Solid](https://www.python.org/static/community_logos/python-powered-w-70x28.png)](https://www.python.org/)
+[![N|Solid](https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png)](https://scikit-learn.org/stable/)
 
 ## Project Objective
 
@@ -8,7 +9,7 @@ The objetive of this project is to develop a disaster classification web app whi
 
 ## Project Components
 
-The project can be broken down in three compoents as follows:
+The project can be broken down in three components as follows:
 1. ETL Pipeline
 
 A Extract Transform Load (ETL) Pipeline which loads the messages and categories datasets, merge them together, cleans the data and stores it in a SQLite database.
@@ -26,6 +27,7 @@ A flask web app which shows the three visualizations explained in the project ob
 
     a. To run ETL pipeline that cleans data and stores in database
         `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterMsgDb.db`
+        
     b. To run ML pipeline that trains classifier and saves
         `python models/train_classifier.py data/DisasterMsgDb.db models/rfc.pkl`
 
