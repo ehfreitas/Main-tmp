@@ -75,6 +75,9 @@ def clean_data(df):
           #print('\tDuplicate rows: {}'.format(duplicated_rows.sum()))
     print('    Number of rows: {}'.format(df.shape[0]))
     
+    # Replaces other values in related by 1
+    df['related'] = df['related'].apply(lambda x: x if ((x==0) or (x==1)) else 1)
+    
     return df
 
 
@@ -87,7 +90,7 @@ def save_data(df, database_filename):
                     database_filename (str): String representing the database filename (which will add the extension '.db')
     '''
     engine = create_engine('sqlite:///' + database_filename + '.db')
-    df.to_sql('DisasterMsg', engine, index=False)
+    df.to_sql('DisasterMsg', engine, index=False, if_exists='replace')
 
 def main():
     if len(sys.argv) == 4:
