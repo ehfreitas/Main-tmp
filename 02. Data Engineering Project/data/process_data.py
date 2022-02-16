@@ -4,6 +4,16 @@ from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
+    '''
+    Loads both the messages and the categories files and merge them together droping unused features
+
+            Parameters:
+                    messages_filepath (str): String representing the messages file path
+                    categories_filepath (str): String representing the categories file path
+
+            Returns:
+                    df (DataFrame): Returns the target DataFrame
+    '''
     # load messages dataset
     messages_df = pd.read_csv(messages_filepath, index_col=0)
     
@@ -18,6 +28,15 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    '''
+    Cleans up the dataframe by separating each category by column and removing duplicates
+
+            Parameters:
+                    df (DataFrame): DataFrame with all categories in one column separated by ';'
+
+            Returns:
+                    df (DataFrame): Returns the "cleaned up" DataFrame
+    '''
     # create a dataframe of the individual category columns
     categories_df = df['categories'].str.split(';', expand=True)
     
@@ -26,7 +45,7 @@ def clean_data(df):
 
     # use this row to extract a list of new column names for categories.
     # one way is to apply a lambda function that takes everything 
-    # up to the second to last character of each string with slicing. I preferred spliting - and getting 
+    # up to the second to last character of each string with slicing. I preferred using split instead.
     category_colnames = row.apply(lambda x: x.split('-')[0]).values
     
     # rename the columns of `categories`
@@ -60,6 +79,13 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    '''
+    Saves the DataFrame into a sqlite database
+
+            Parameters:
+                    df (DataFrame): Cleaned up dataframe
+                    database_filename (str): String representing the database filename (which will add the extension '.db')
+    '''
     engine = create_engine('sqlite:///' + database_filename + '.db')
     df.to_sql('DisasterMsg', engine, index=False)
 

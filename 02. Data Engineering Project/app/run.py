@@ -16,6 +16,16 @@ from sklearn.ensemble import _forest
 app = Flask(__name__)
 
 def tokenize(text):
+    '''
+    Transforms the text into tokens, lemmatizes it and make some other small transformations to the text before
+    returning the clean token
+
+            Parameters:
+                    text (str): The full message which needs to be treated
+
+            Returns:
+                    clean_tokens (list): A list of clean tokens (str)
+    '''
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -36,7 +46,10 @@ model = joblib.load("../models/rfc.pkl")
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
 @app.route('/index')
-def index():    
+def index():
+    '''
+    Defines how flask will treat the main webpage
+    '''
     
     # Generating the genre count and genre names needs to create the plotly graph
     genre_counts = df.groupby('genre').count()['message']
@@ -126,6 +139,9 @@ def index():
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    '''
+    Defines how Flask will treat when the user enters a sentence to be analyzed by the ML model
+    '''
     # save user input in query
     query = request.args.get('query', '') 
 

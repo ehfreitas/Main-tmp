@@ -41,6 +41,16 @@ def load_data(database_filepath):
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 def tokenize(text):
+    '''
+    Transforms the text into tokens, lemmatizes it and make some other small transformations to the text before
+    returning the clean token
+
+            Parameters:
+                    text (str): The full message which needs to be treated
+
+            Returns:
+                    clean_tokens (list): A list of clean tokens (str)
+    '''
     detected_urls = re.findall(url_regex, text)
     for url in detected_urls:
         text = text.replace(url, "urlplaceholder")
@@ -57,6 +67,14 @@ def tokenize(text):
 
 
 def build_model():
+    '''
+    Creates the model pipeline in order to facilitate standard treatment of the feature and model
+    optimization. The basic pipeline consits of a CountVectorizer, with a TfidTransformer and a
+    MultiOutputClassifier which runs on a RandomForestClassifier.
+
+            Returns:
+                    cv (GridSearchCV): returns an optimized model
+    '''    
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -85,6 +103,15 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    Given a model, the independent variables and the dependent variables and the category names it displays the model results for each disaster category in the dataset
+
+            Parameters:
+                    model (GridSearchCV): the optimized model
+                    X_test (str) : The text which we are are trying to predict to which categories it belongs
+                    Y_test (DataFrame) : A DataFrame with the categories which we will be trying to predict
+                    category_names (list) : A list of the category names so we can print the classification report for each category
+    '''
     prediction = model.predict(X_test)
 
     for index, category in enumerate(category_names):
@@ -93,6 +120,13 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    '''
+    Saves the model in a pickle format to a file_path
+
+            Parameters:
+                    model (GridSearchCV) : The trained model which will be saved to the disk to be used later
+                    model_filepath (str) : The file path where the pickle file will be stored
+    '''
     # save the model to disk
     pickle.dump(model, open(model_filepath, 'wb'))
 
