@@ -38,23 +38,26 @@ model = joblib.load("../models/rfc.pkl")
 @app.route('/index')
 def index():    
     
-    # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
+    # Generating the genre count and genre names needs to create the plotly graph
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
 
+    # Filtering the disaster cateories, summing its values and sort in descending order
+    # to generate categories from the most common to the most uncommon
     category_counts = df[df.columns[2:]].sum().sort_values(ascending=False)
+    # Fixing up the columns names so each first letter is captalized and _ is replaced by spaces
     category_counts = category_counts.rename(index=lambda x: x.title().replace('_', ' '))    
     category_names = list(category_counts.index)
 
+    # Generating the top percentile category (0.75-1.00)
     top_25_cat_count = category_counts[category_counts >= category_counts.quantile(.75)]
     top_25_cat_names = list(top_25_cat_count.index)
 
+    # Generating the bottom percentile caegories (0 - 0.25)
     bottom_25_cat_count = category_counts[category_counts <= category_counts.quantile(.25)].sort_values()
     lower_25_cat_names = list(bottom_25_cat_count.index)
     
-    # create visuals
-    # TODO: Below is an example - modify to create your own visuals
+    # To send all graphs to the webpage I was only required to add each graph to the graph list
     graphs = [
                 {
             'data': [
@@ -117,7 +120,7 @@ def index():
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     
     # render web page with plotly graphs
-    return render_template('master2.html', ids=ids, graphJSON=graphJSON)
+    return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
 
 # web page that handles user query and displays model results
