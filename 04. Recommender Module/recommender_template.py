@@ -12,7 +12,7 @@ class Recommender():
         what do we need to start out our recommender system
         ''' 
 
-    def fit(self, user_movie_df, latent_features=4, learning_rate=0.0001, iter=100):
+    def fit(self, movies_path, reviews_path, latent_features=4, learning_rate=0.0001, iter=100):
         '''
         This function performs matrix factorization using a basic form of FunkSVD with no regularization
         
@@ -26,10 +26,23 @@ class Recommender():
         user_mat - (numpy array) a user by latent feature matrix
         movie_mat - (numpy array) a latent feature by movie matrix
         '''
-        self.user_movie_df = user_movie_df
-        self.ratings_mat = np.matrix(user_movie_df)
-        self.users = np.array(user_movie_df.index)
-        self.movies = np.array(user_movie_df.columns)
+        movies = pd.read_csv(movies_path)
+        reviews = pd.read_csv(reviews_path)
+
+        del movies['Unnamed: 0']
+        del reviews['Unnamed: 0']
+
+        self.movies = movies
+        self.reviews = reviews
+
+        # Create user-by-item matrix
+        user_items = reviews[['user_id', 'movie_id', 'rating', 'timestamp']]
+        user_by_movie = user_items.groupby(['user_id', 'movie_id'])['rating'].max().unstack()
+
+        self.user_movie_df = user_by_movie
+        self.ratings_mat = np.matrix(user_by_movie)
+        self.users_array = np.array(user_by_movie.index)
+        self.movies_array = np.array(user_by_movie.columns)
 
         # Set up useful values to be used through the rest of the function
         n_users = self.ratings_mat.shape[0]
@@ -88,15 +101,15 @@ class Recommender():
         pred - the predicted rating for user_id-movie_id according to FunkSVD
         '''
         # User row and Movie Column
-        user_row = np.where(self.users == user_id)[0][0]
-        movie_col = np.where(self.movies == movie_id)[0][0]
+        user_row = np.where(self.users_array == user_id)[0][0]
+        movie_col = np.where(self.movies_array == movie_id)[0][0]
         
         # Take dot product of that row and column in U and V to make prediction
         pred = np.dot(self.user_mat[user_row, :], self.movie_mat[:, movie_col])
     
         return pred
 
-    def make_recs(self, _id, movies, reviews, _id_type='movie', rec_num=5):
+    def make_recs(self, _id, _id_type='movie', rec_num=5):
         '''
         INPUT:
         _id - either a user or movie id (int)
@@ -114,33 +127,38 @@ class Recommender():
         '''
         #ranked_df = create_ranked_df(movies, train_df)
         
-        if _id_type == 'user' and _id in self.users:
+        if _id_type == 'user' and _id in self.users_array:
             print('Making recommendation for user already in db.')
-            user_idx = np.where(self.users == _id)[0][0]
+            user_idx = np.where(self.users_array == _id)[0][0]
             preds = np.dot(self.user_mat[user_idx, :], self.movie_mat)
             bst_movies_idx = preds.argsort()[::-1][:rec_num]
-            rec_ids = self.user_movie_df.columns[bst_movies_idx]
-            rec_names = rf.get_movie_names(rec_ids, movies)
-        elif _id_type == 'movie' and _id in self.movies:
+            rec_ids = np.array(self.user_movie_df.columns[bst_movies_idx])
+            rec_names = rf.get_movie_names(rec_ids, self.movies)
+        elif _id_type == 'movie' and _id in self.movies_array:
             print('Making recommendation for movie already in db.')
-            rec_ids = rf.find_similar_movies(_id, movies)[:rec_num]
-            rec_names = rf.get_movie_names(rec_ids, movies)
-        elif _id_type == 'user' and _id not in self.users:
-            print('User not in database. Making general recommendations.')
-            grouped_df = reviews.groupby('movie_id')[['user_id', 'rating']].agg({
+            movie_idx = np.where(self.movies_array == _id)[0][0]
+            preds = np.dot(self.user_mat, self.movie_mat[:, movie_idx])
+            bst_movies_idx = preds.argsort()[::-1][:rec_num]
+            rec_ids = np.array(self.user_movie_df.columns[bst_movies_idx])
+            rec_names = rf.get_movie_names(rec_ids, self.movies)
+
+        elif _id_type == 'user' and _id not in self.users_array:
+            print('User not in db. Making general recommendations.')
+            grouped_df = self.reviews.groupby('movie_id')[['user_id', 'rating']].agg({
                 'user_id' : 'size', 'rating' : 'mean'
             })
             filtered_df = grouped_df[grouped_df['user_id'] >= 10].sort_values(['rating', 'user_id'], ascending=False).head(rec_num)
             rec_ids = np.array(filtered_df.index)
-            rec_names = rf.get_movie_names(rec_ids, movies)
+            rec_names = rf.get_movie_names(rec_ids, self.movies)
         else:
-            print('New movie.')            
+            print('Movie not in db. No recommendations.')
         return rec_ids, rec_names
 
 
 if __name__ == '__main__':
     # test different parts to make sure it works
     rec = Recommender()
+
     movies = pd.read_csv('movies_clean.csv')
     reviews = pd.read_csv('train_data.csv')
 
@@ -151,9 +169,13 @@ if __name__ == '__main__':
     user_items = reviews[['user_id', 'movie_id', 'rating', 'timestamp']]
     user_by_movie = user_items.groupby(['user_id', 'movie_id'])['rating'].max().unstack()
 
-    rec.fit(user_by_movie, iter=250, learning_rate=0.005)
+    #print(movies)
+    #print(rf.get_movie_names(np.array([454876, 1853728, 1675434, 2125608, 110912]), movies))
+
+    rec.fit('movies_clean.csv', 'train_data.csv', latent_features=15, iter=5, learning_rate=0.005)
+    
     print(rec.predict_rating(8, 2844))
-    print('\t', rec.make_recs(8, movies, user_items, 'user'))
-    print('\t', rec.make_recs(1024648, movies, user_items, 'movie'))
-    print('\t', rec.make_recs(66666666, movies, user_items, 'user'))
+    print('\t', rec.make_recs(8, 'user'))
+    print('\t', rec.make_recs(1024648, 'movie'))
+    print('\t', rec.make_recs(66666666, 'user'))
     
