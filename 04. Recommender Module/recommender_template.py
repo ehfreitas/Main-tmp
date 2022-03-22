@@ -43,6 +43,9 @@ class Recommender():
         self.ratings_mat = np.matrix(user_by_movie)
         self.users_array = np.array(user_by_movie.index)
         self.movies_array = np.array(user_by_movie.columns)
+        #print('user_by_movie shape: ', user_by_movie.shape)
+        #print('user_by_movie.column min: ', min(user_by_movie.columns))
+        #print('user_by_movie.column max: ', max(user_by_movie.columns))
 
         # Set up useful values to be used through the rest of the function
         n_users = self.ratings_mat.shape[0]
@@ -134,12 +137,20 @@ class Recommender():
             bst_movies_idx = preds.argsort()[::-1][:rec_num]
             rec_ids = np.array(self.user_movie_df.columns[bst_movies_idx])
             rec_names = rf.get_movie_names(rec_ids, self.movies)
+
         elif _id_type == 'movie' and _id in self.movies_array:
             print('Making recommendation for movie already in db.')
             movie_idx = np.where(self.movies_array == _id)[0][0]
+            print(self.movies_array)
+            #print('movie_idx: ', movie_idx)
+            #print('movie_mat shape: ',np.shape(self.movie_mat))
             preds = np.dot(self.user_mat, self.movie_mat[:, movie_idx])
             bst_movies_idx = preds.argsort()[::-1][:rec_num]
+            #print('best preds: ', bst_movies_idx)
+            print('trying to find index')
+            print([idx for idx, col in enumerate(self.user_movie_df.columns) if col in bst_movies_idx])
             rec_ids = np.array(self.user_movie_df.columns[bst_movies_idx])
+            #print('rec_ids: ', rec_ids)
             rec_names = rf.get_movie_names(rec_ids, self.movies)
 
         elif _id_type == 'user' and _id not in self.users_array:
@@ -158,24 +169,16 @@ class Recommender():
 if __name__ == '__main__':
     # test different parts to make sure it works
     rec = Recommender()
-
-    movies = pd.read_csv('movies_clean.csv')
-    reviews = pd.read_csv('train_data.csv')
-
-    del movies['Unnamed: 0']
-    del reviews['Unnamed: 0']
-
-    # Create user-by-item matrix
-    user_items = reviews[['user_id', 'movie_id', 'rating', 'timestamp']]
-    user_by_movie = user_items.groupby(['user_id', 'movie_id'])['rating'].max().unstack()
-
-    #print(movies)
-    #print(rf.get_movie_names(np.array([454876, 1853728, 1675434, 2125608, 110912]), movies))
-
-    rec.fit('movies_clean.csv', 'train_data.csv', latent_features=15, iter=5, learning_rate=0.005)
     
-    print(rec.predict_rating(8, 2844))
+    #movies = pd.read_csv('movies_clean.csv')
+    #del movies['Unnamed: 0']
+    #print('printing get_movie_names')
+    #print(rf.get_movie_names(np.array([3207, 2393, 786, 1091, 1761]), movies))
+    #print('filtering dataframe by hand')
+    #print(movies[movies['movie_id'] == 3207])
+
+    rec.fit('movies_clean.csv', 'train_data.csv', latent_features=10, iter=10, learning_rate=0.005)
+    print('Rating for user 8, movie 2844: ', rec.predict_rating(8, 2844))
     print('\t', rec.make_recs(8, 'user'))
     print('\t', rec.make_recs(1024648, 'movie'))
     print('\t', rec.make_recs(66666666, 'user'))
-    
